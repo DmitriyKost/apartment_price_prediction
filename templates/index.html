@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Калькулятор стоимости квартиры</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            max-width: 600px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            margin-top: 5px;
+            padding: 8px;
+            font-size: 14px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .autocomplete-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .suggestions {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            border: 1px solid #ccc;
+            max-height: 150px;
+            overflow-y: auto;
+            background-color: #fff;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+        }
+
+        .suggestions li {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+
+        .suggestions li:hover {
+            background-color: #f0f0f0;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Калькулятор стоимости квартиры</h1>
+    <form id="apartment-form">
+        <label for="apartment-type">Тип квартиры</label>
+        <select id="apartment-type" name="apartment_type" required>
+            <option value="new">Новостройка</option>
+            <option value="secondary">Вторичный рынок</option>
+        </select>
+
+        <label for="metro-station">Ближайшая станция метро</label>
+        <div class="autocomplete-container">
+            <input type="text" id="metro-station" name="metro_station" placeholder="Введите название станции" required>
+            <ul id="metro-suggestions" class="suggestions"></ul>
+        </div>
+
+        <label for="minutes-to-metro">Минут до метро</label>
+        <input type="number" id="minutes-to-metro" name="minutes_to_metro" placeholder="Например, 10" min="1" required>
+
+        <label for="rooms">Количество комнат</label>
+        <input type="number" id="number-of-rooms" name="number_of_rooms" placeholder="Например, 2" min="1" required>
+
+        <label for="area">Общая площадь (м²)</label>
+        <input type="number" id="area" name="area" placeholder="Например, 50" min="33" required>
+
+        <label for="living-area">Жилая площадь (м²)</label>
+        <input type="number" id="living-area" name="living_area" placeholder="Например, 35" min="18" required>
+
+        <label for="kitchen-area">Площадь кухни (м²)</label>
+        <input type="number" id="kitchen-area" name="kitchen_area" placeholder="Например, 10" min="0" required>
+
+        <label for="floor">Этаж</label>
+        <input type="number" id="floor" name="floor" placeholder="Например, 3" min="1" required>
+
+        <label for="number-of-floors">Количество этажей в доме</label>
+        <input type="number" id="number-of-floors" name="number_of_floors" placeholder="Например, 10" min="1" required>
+
+        <label for="renovation">Уровень ремонта</label>
+        <select id="renovation" name="renovation" required>
+            <option value="Without renovation">Без ремонта</option>
+            <option value="Cosmetic">Косметический ремонт</option>
+            <option value="European-style renovation">Евроремонт</option>
+        </select>
+
+        <button type="button" onclick="calculatePrice()">Рассчитать стоимость</button>
+    </form>
+
+    <div id="result" class="result"></div>
+    <script>
+        const metroStations = [
+            "Киевская", "Арбатская", "Алексеевская", "Бауманская", "Белорусская",
+            "Таганская", "Кузнецкий Мост", "Комсомольская", "Краснопресненская",
+            "Парк Победы", "Проспект Мира", "Тверская"
+        ];
+
+        const input = document.getElementById('metro-station');
+        const suggestions = document.getElementById('metro-suggestions');
+
+        input.addEventListener('input', () => {
+            const query = input.value.toLowerCase();
+            suggestions.innerHTML = '';
+
+            if (query.length === 0) return;
+            const filteredStations = metroStations.filter(station =>
+                station.toLowerCase().includes(query)
+            );
+            filteredStations.forEach(station => {
+                const li = document.createElement('li');
+                li.textContent = station;
+                li.addEventListener('click', () => {
+                    input.value = station;
+                    suggestions.innerHTML = '';
+                });
+                suggestions.appendChild(li);
+            });
+        });
+
+        // Скрытие списка подсказок при клике вне поля
+        document.addEventListener('click', (event) => {
+            if (!input.contains(event.target) && !suggestions.contains(event.target)) {
+                suggestions.innerHTML = '';
+            }
+        });
+
+        async function calculatePrice() {
+            const form = document.getElementById('apartment-form');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData);
+
+            const response = await fetch('/calculate', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+
+            const result = await response.json();
+            document.getElementById('result').textContent = `Примерная стоимость квартиры: ${result.price} ₽`;
+        }
+    </script>
+</body>
+
+</html>
