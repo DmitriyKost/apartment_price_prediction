@@ -4,10 +4,8 @@ from catboost import Pool
 import pickle
 
 
-def prepare_data(apartment_data_json_filename, metro_coords_data_filename='metro_stations_dataset.csv'):
-    with open(apartment_data_json_filename, 'r') as f:
-        apartment_data_json = f.read()
-    apartment_data = json.loads(apartment_data_json)
+def prepare_data(apartment_data_bytes, metro_coords_data_filename='metro_stations_dataset.csv'):
+    apartment_data = json.loads(apartment_data_bytes.decode('utf-8'))
 
     df = pd.DataFrame([apartment_data])
     metro_coords_data = pd.read_csv(metro_coords_data_filename)
